@@ -184,4 +184,7 @@ def a_reports():
 @admin
 def a_resolve(rid): q("UPDATE reports SET resolved=1 WHERE id=%s", (rid,), write=True); return jsonify(ok=True)
 
-if __name__ == "__main__": app.run(debug=True, port=5000)
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5000))
+    debug = os.getenv("FLASK_DEBUG", "false").lower() in ("true", "1")
+    app.run(host="0.0.0.0", port=port, debug=debug)
