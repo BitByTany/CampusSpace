@@ -1,16 +1,178 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CampusSpace – find a free classroom</title><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#12343b">
-<link rel="icon" href="/icons/icon-192.png"><link rel="apple-touch-icon" href="/icons/icon-192.png"><link rel="stylesheet" href="/css/style.css"></head><body>
-<header><div><h1>CampusSpace</h1><p>Free classrooms right now · <span id="clock"></span></p></div><a href="/admin">Admin</a></header>
-<main>
-<section class="filters">
- <input id="q" type="search" placeholder="Room number, e.g. 37" aria-label="Search room number">
- <select id="dept" aria-label="Department"><option value="">All departments</option></select>
- <select id="status" aria-label="Status"><option value="">Any status</option><option>Vacant</option><option>Occupied</option><option>Class Ongoing</option><option>Unverified</option></select>
- <input id="cap" type="number" min="0" placeholder="Min capacity" aria-label="Minimum capacity">
- <button id="vac" class="chip" aria-pressed="false">Vacant only</button>
-</section>
-<p class="legend"><i class="vacant"></i>Vacant <i class="occupied"></i>Occupied <i class="class-ongoing"></i>Class ongoing <i class="unverified"></i>Unverified</p>
-<section id="grid" class="grid" aria-live="polite"></section>
-</main>
-<dialog id="dlg"></dialog><script src="/js/app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CampusSpace – Smart Campus Classroom Availability</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#12343b">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- ================= 1. WELCOME PAGE VIEW ================= -->
+  <section id="view-welcome" class="view" style="display:none;">
+    <header class="header">
+      <div>
+        <h1>CampusSpace</h1>
+        <p>Smart Classroom Availability</p>
+      </div>
+      <a href="/admin" class="nav-link">Admin</a>
+    </header>
+
+    <main class="welcome-container">
+      <div class="welcome-card">
+        <div class="welcome-badge">
+          <span class="live-dot"></span> Live Campus Space Finder
+        </div>
+        <h2 class="welcome-title">Welcome to CampusSpace</h2>
+        <p class="welcome-desc">
+          CampusSpace helps students discover free and available classrooms across campus in real time.
+          Effortlessly check live occupancy, view daily lecture timetables, and find quiet spots to study or collaborate.
+        </p>
+
+        <div class="welcome-features">
+          <div class="feature-item">
+            <span class="feature-icon">🟢</span>
+            <div>
+              <strong>Live Availability</strong>
+              <small>Instantly see vacant, occupied, and class-ongoing rooms.</small>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">📅</span>
+            <div>
+              <strong>Lecture Schedules</strong>
+              <small>View complete department timetables and upcoming slots.</small>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">👥</span>
+            <div>
+              <strong>Crowd Status</strong>
+              <small>Stay informed with peer updates and approximate seat occupancy.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="welcome-action">
+          <button id="btn-get-started" class="btn-primary btn-lg">Get Started &rarr;</button>
+          <p class="welcome-sub">Fast student access · No password required</p>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- ================= 2. STUDENT LOGIN VIEW ================= -->
+  <section id="view-login" class="view" style="display:none;">
+    <header class="header">
+      <div>
+        <h1>CampusSpace</h1>
+        <p>Student Sign-In</p>
+      </div>
+      <a href="/admin" class="nav-link">Admin</a>
+    </header>
+
+    <main class="login-container">
+      <div class="login-card">
+        <h2 class="login-title">Student Login</h2>
+        <p class="login-desc">Enter your full name and either your roll number or college email to access campus spaces.</p>
+
+        <div id="login-error" class="error-banner" style="display:none;" role="alert"></div>
+
+        <form id="student-login-form" novalidate>
+          <div class="form-group">
+            <label for="student-name">Student Full Name <span class="required">*</span></label>
+            <input id="student-name" type="text" placeholder="e.g. Alex Morgan" autocomplete="name" required>
+            <small class="hint">Full name is mandatory.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="student-id">Roll Number OR Email Address <span class="required">*</span></label>
+            <input id="student-id" type="text" placeholder="e.g. 22CS104 or student@college.edu" autocomplete="username" required>
+            <small class="hint">Enter either your campus roll number or college email address.</small>
+          </div>
+
+          <div class="login-actions">
+            <button type="submit" id="btn-login-submit" class="btn-primary btn-block">Continue to CampusSpace &rarr;</button>
+            <button type="button" id="btn-login-back" class="ghost btn-block">Back to Home</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </section>
+
+  <!-- ================= 3. APPLICATION DASHBOARD VIEW ================= -->
+  <section id="view-app" class="view" style="display:none;">
+    <header class="header app-header">
+      <div class="header-brand">
+        <h1>CampusSpace</h1>
+        <p>Free classrooms right now · <span id="clock"></span></p>
+      </div>
+
+      <div class="header-actions">
+        <!-- Profile Section -->
+        <div id="profile-section" class="profile-section">
+          <button id="profile-pill-btn" class="profile-pill" aria-label="View Student Profile" title="Click to view student profile">
+            <span class="avatar-badge">🎓</span>
+            <div class="profile-pill-details">
+              <strong id="profile-name">Student</strong>
+              <small id="profile-id">ID</small>
+            </div>
+          </button>
+          <button id="btn-header-logout" class="ghost btn-logout" title="Log out">Log out</button>
+        </div>
+
+        <a href="/admin" class="nav-link">Admin</a>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="filters">
+        <input id="q" type="search" placeholder="Room number, e.g. 37" aria-label="Search room number">
+        <select id="dept" aria-label="Department"><option value="">All departments</option></select>
+        <select id="status" aria-label="Status">
+          <option value="">Any status</option>
+          <option>Vacant</option>
+          <option>Occupied</option>
+          <option>Class Ongoing</option>
+          <option>Unverified</option>
+        </select>
+        <input id="cap" type="number" min="0" placeholder="Min capacity" aria-label="Minimum capacity">
+        <button id="vac" class="chip" aria-pressed="false">Vacant only</button>
+      </section>
+
+      <p class="legend"><i class="vacant"></i>Vacant <i class="occupied"></i>Occupied <i class="class-ongoing"></i>Class ongoing <i class="unverified"></i>Unverified</p>
+
+      <section id="grid" class="grid" aria-live="polite"></section>
+    </main>
+
+    <!-- Student Profile Modal Dialog -->
+    <dialog id="dlg-profile">
+      <div class="sheet profile-sheet">
+        <button class="x" onclick="document.querySelector('#dlg-profile').close()" aria-label="Close">×</button>
+        <h2>Student Profile</h2>
+        <div class="profile-card-modal">
+          <div class="profile-avatar-modal">🎓</div>
+          <div class="profile-modal-info">
+            <h3 id="modal-student-name">Student Name</h3>
+            <p id="modal-student-id">Roll / Email</p>
+            <span class="badge vacant">Active Session</span>
+          </div>
+        </div>
+        <div class="profile-modal-actions">
+          <button class="ghost" onclick="document.querySelector('#dlg-profile').close()">Close</button>
+          <button id="btn-modal-logout" class="btn-logout-danger">Log out</button>
+        </div>
+      </div>
+    </dialog>
+  </section>
+
+  <!-- Classroom Details Dialog -->
+  <dialog id="dlg"></dialog>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

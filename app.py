@@ -1,4 +1,4 @@
-import os, csv, io
+import os, csv, io, re
 from functools import wraps
 from flask import Flask, jsonify, request, session, send_from_directory
 from db import q
@@ -38,6 +38,31 @@ def home(): return send_from_directory("static", "index.html")
 def admin_page(): return send_from_directory("static", "admin.html")
 
 # ---------- student API ----------
+@app.get("/api/student/me")
+def student_me():
+    s = session.get("student")
+    return jsonify(logged_in=bool(s), student=s)
+
+@app.post("/api/student/login")
+def student_login():
+    d = request.json or {}
+    name = str(d.get("name", "")).strip()
+    identifier = str(d.get("identifier", "")).strip()
+    if not name:
+        return jsonify(error="Student name is required."), 400
+    if not identifier:
+        return jsonify(error="Roll number or email address is required."), 400
+    if "@" in identifier and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", identifier):
+        return jsonify(error="Please enter a valid email address."), 400
+    student_data = {"name": name, "identifier": identifier}
+    session["student"] = student_data
+    return jsonify(ok=True, student=student_data)
+
+@app.post("/api/student/logout")
+def student_logout():
+    session.pop("student", None)
+    return jsonify(ok=True)
+
 @app.get("/api/departments")
 def departments(): return jsonify(q("SELECT code,name FROM departments ORDER BY code"))
 
